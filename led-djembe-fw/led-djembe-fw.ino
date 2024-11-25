@@ -16,15 +16,6 @@ void printHex(const uint8_t *data, const uint32_t numBytes);
 // Packet buffer
 extern uint8_t packetbuffer[];
 
-const int LED_PIN_1 = 0;           // the PWM pin the LED is attached to
-const int LED_PIN_2 = 10;          // the PWM pin the LED is attached to
-unsigned long FADE_PEDIOD = 3000;  // fade time is 3 seconds
-unsigned long fadeStartTime1, fadeStartTime2;
-
-int ledStatus = 1;
-
-#define MINPWM 135
-
 void setup(void) {
   Serial.begin(115200);
   //while ( !Serial ) delay(10);   // for nrf52840 with native usb
@@ -33,11 +24,6 @@ void setup(void) {
   Serial.println(F("-------------------------------------------"));
 
   initBLE();
-
-  pinMode(LED_PIN_1, OUTPUT);  // declare pin 9 to be an output
-  pinMode(LED_PIN_2, OUTPUT);  // declare pin 9 to be an output
-  fadeStartTime1 = millis();
-  fadeStartTime2 = millis();
 }
 
 void initBLE() {
@@ -94,18 +80,6 @@ void startAdv(void) {
 /**************************************************************************/
 void loop(void) {
 
-  if (ledStatus == 1) {
-    fadeLED1();
-    fadeLED2();
-  } else if (ledStatus == 2) {
-    analogWrite(LED_PIN_1, 0);
-    analogWrite(LED_PIN_2, 0);
-  } else if (ledStatus == 3) {
-    analogWrite(LED_PIN_1, 255);
-    analogWrite(LED_PIN_2, 255);
-  }
-
-
   readBLE();
 }
 
@@ -142,9 +116,9 @@ void readBLE() {
     } else {
       Serial.println(" released");
 
-      if (buttnum == 1) ledStatus = 1; // ON
-      if (buttnum == 2) ledStatus = 2; // oFF
-      if (buttnum == 3) ledStatus = 3; // CONTINUOUS
+      // if (buttnum == 1) ledStatus = 1; // ON
+      // if (buttnum == 2) ledStatus = 2; // oFF
+      // if (buttnum == 3) ledStatus = 3; // CONTINUOUS
     }
   }
 
@@ -229,38 +203,38 @@ void readBLE() {
   }
 }
 
-bool fadeDirection1, fadeDirection2;
-void fadeLED1() {
-  unsigned long progress = millis() - fadeStartTime1;
+// bool fadeDirection1, fadeDirection2;
+// void fadeLED1() {
+//   unsigned long progress = millis() - fadeStartTime1;
 
-  if (progress <= FADE_PEDIOD) {
-    long brightness;
-    if (fadeDirection1 == true) {
-      brightness = map(progress, 0, FADE_PEDIOD, MINPWM, 255);
-    } else {
-      brightness = map(progress, 0, FADE_PEDIOD, 255, MINPWM);
-    }
+//   if (progress <= FADE_PEDIOD) {
+//     long brightness;
+//     if (fadeDirection1 == true) {
+//       brightness = map(progress, 0, FADE_PEDIOD, MINPWM, 255);
+//     } else {
+//       brightness = map(progress, 0, FADE_PEDIOD, 255, MINPWM);
+//     }
 
-    analogWrite(LED_PIN_1, brightness);
-  } else {
-    fadeDirection1 = !fadeDirection1;
-    fadeStartTime1 = millis();  // restart fade again
-  }
-}
+//     analogWrite(LED_PIN_1, brightness);
+//   } else {
+//     fadeDirection1 = !fadeDirection1;
+//     fadeStartTime1 = millis();  // restart fade again
+//   }
+// }
 
-void fadeLED2() {
-  unsigned long progress = millis() - fadeStartTime2;
+// void fadeLED2() {
+//   unsigned long progress = millis() - fadeStartTime2;
 
-  if (progress <= FADE_PEDIOD) {
-    long brightness;
-    if (fadeDirection2 == true) {
-      brightness = map(progress, 0, FADE_PEDIOD, MINPWM, 255);
-    } else {
-      brightness = map(progress, 0, FADE_PEDIOD, 255, MINPWM);
-    }
-    analogWrite(LED_PIN_2, brightness);
-  } else {
-    fadeDirection2 = !fadeDirection2;
-    fadeStartTime2 = millis();  // restart fade again
-  }
-}
+//   if (progress <= FADE_PEDIOD) {
+//     long brightness;
+//     if (fadeDirection2 == true) {
+//       brightness = map(progress, 0, FADE_PEDIOD, MINPWM, 255);
+//     } else {
+//       brightness = map(progress, 0, FADE_PEDIOD, 255, MINPWM);
+//     }
+//     analogWrite(LED_PIN_2, brightness);
+//   } else {
+//     fadeDirection2 = !fadeDirection2;
+//     fadeStartTime2 = millis();  // restart fade again
+//   }
+// }
