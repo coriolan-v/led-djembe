@@ -41,6 +41,8 @@ int animationMode = 0;
 bool triggerLEDflag = true;
 
 unsigned long stampMill_triggerLED = 0;
+#include "fx/1d/demoreel100.hpp"
+DemoReel100Ref demoReel = DemoReel100Ref::New(NUM_LEDS);
 
 void initLED() {
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -55,6 +57,8 @@ void initLED() {
   //FillLEDsFromPaletteColors();
 
   chooseRandomPalette();
+
+  demoInit();
 
  // gPal = HeatColors_p;
 }
@@ -76,6 +80,8 @@ int lastPixel;   //= map(maxRangePC, 0, NUM_LEDS, 0, 59);
 unsigned long prevMill_changePalete = 0;
 int intervalPaltteChangeMin = 2;
 
+
+
 void runLED() {
 
   random16_add_entropy(random());
@@ -90,45 +96,30 @@ void runLED() {
   if (millis() - previousMillis_runLEDs >= intervalFPSled) {
     previousMillis_runLEDs = millis();
 
-    Fire2012WithPalette();
+    if(mode == 0){
+        Fire2012WithPalette();
 
-  //  Fire2012WithPalette_L();  // run simulation frame, using palette colors
-   // Fire2012WithPalette_R();  // run simulation frame, using palette colors
-
-
-
-    // for (int i = 0; i < NUM_LEDS; i++) {
-    //   // Addition
-    //   leds[i] = leds_L[i] + leds_R[i];
-    // }
-
-
-    // dimRange(firstPixel, lastPixel, 10); // Dim the last 5 pixels by 50%
-
-    // startIndex = startIndex + motionSpeed; /* motion speed */
-
-    // // FillLEDsFromPaletteColors(startIndex);
-
-    // if(triggerLEDflag == true)
-    // {
-    //   FillLEDsFromPaletteColors(startIndex);
-    // }
-
-    // if(triggerLEDflag == true && (millis() - stampMill_triggerLED >= LEDdecayMs)){
-    //  // FillLEDsFromPaletteColors(startIndex);
-    //   currentBrightness = currentBrightness - decreaseIncrement;
-    //   constrain(currentBrightness, 0, 255);
-    //   if(currentBrightness < 0) currentBrightness = 0;
-    //   setMaxBrightness(currentBrightness);
-    //   //Serial.print("____BRI: ");
-    //   //Serial.println(currentBrightness);
-    //   if(currentBrightness < 1) triggerLEDflag = false;
-    // }
-
-
-
+     gradualDimRange(firstPixel, lastPixel, 25);
+    } else if (mode == 1){
+         demoReel->draw(Fx::DrawContext(millis(), leds));
+    }
+   
 
     FastLED.show();
+  }
+}
+
+
+
+void demoInit(){
+    demoReel->lazyInit();
+}
+
+void gradualDimRange(int startIdx, int endIdx, uint8_t finalDimFactor) {
+  int rangeLength = endIdx - startIdx + 1;
+  for (int i = 0; i < rangeLength; i++) {
+    uint8_t dimFactor = map(i, 0, rangeLength - 1, 255, finalDimFactor);
+    leds[startIdx + i].nscale8(dimFactor);
   }
 }
 

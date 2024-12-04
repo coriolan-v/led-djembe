@@ -81,6 +81,8 @@ void readBLE() {
     Serial.print(green, HEX);
     if (blue < 0x10) Serial.print("0");
     Serial.println(blue, HEX);
+
+    Serial.println("")
   }
 
   // Buttons
@@ -94,125 +96,13 @@ void readBLE() {
     } else {
       Serial.println(" released");
 
-      // if (buttnum == 1) ledStatus = 1; // ON
+      if (buttnum == 1) mode = 0;  // normal mode
+      if (buttnum == 2) {
+        mode = 1;  // demo mode
+         setMaxBrightness(255);
+      }
       // if (buttnum == 2) ledStatus = 2; // oFF
       // if (buttnum == 3) ledStatus = 3; // CONTINUOUS
     }
   }
-
-  // GPS Location
-  if (packetbuffer[1] == 'L') {
-    float lat, lon, alt;
-    lat = parsefloat(packetbuffer + 2);
-    lon = parsefloat(packetbuffer + 6);
-    alt = parsefloat(packetbuffer + 10);
-    Serial.print("GPS Location\t");
-    Serial.print("Lat: ");
-    Serial.print(lat, 4);  // 4 digits of precision!
-    Serial.print('\t');
-    Serial.print("Lon: ");
-    Serial.print(lon, 4);  // 4 digits of precision!
-    Serial.print('\t');
-    Serial.print(alt, 4);
-    Serial.println(" meters");
-  }
-
-  // Accelerometer
-  if (packetbuffer[1] == 'A') {
-    float x, y, z;
-    x = parsefloat(packetbuffer + 2);
-    y = parsefloat(packetbuffer + 6);
-    z = parsefloat(packetbuffer + 10);
-    Serial.print("Accel\t");
-    Serial.print(x);
-    Serial.print('\t');
-    Serial.print(y);
-    Serial.print('\t');
-    Serial.print(z);
-    Serial.println();
-  }
-
-  // Magnetometer
-  if (packetbuffer[1] == 'M') {
-    float x, y, z;
-    x = parsefloat(packetbuffer + 2);
-    y = parsefloat(packetbuffer + 6);
-    z = parsefloat(packetbuffer + 10);
-    Serial.print("Mag\t");
-    Serial.print(x);
-    Serial.print('\t');
-    Serial.print(y);
-    Serial.print('\t');
-    Serial.print(z);
-    Serial.println();
-  }
-
-  // Gyroscope
-  if (packetbuffer[1] == 'G') {
-    float x, y, z;
-    x = parsefloat(packetbuffer + 2);
-    y = parsefloat(packetbuffer + 6);
-    z = parsefloat(packetbuffer + 10);
-    Serial.print("Gyro\t");
-    Serial.print(x);
-    Serial.print('\t');
-    Serial.print(y);
-    Serial.print('\t');
-    Serial.print(z);
-    Serial.println();
-  }
-
-  // Quaternions
-  if (packetbuffer[1] == 'Q') {
-    float x, y, z, w;
-    x = parsefloat(packetbuffer + 2);
-    y = parsefloat(packetbuffer + 6);
-    z = parsefloat(packetbuffer + 10);
-    w = parsefloat(packetbuffer + 14);
-    Serial.print("Quat\t");
-    Serial.print(x);
-    Serial.print('\t');
-    Serial.print(y);
-    Serial.print('\t');
-    Serial.print(z);
-    Serial.print('\t');
-    Serial.print(w);
-    Serial.println();
-  }
 }
-
-// bool fadeDirection1, fadeDirection2;
-// void fadeLED1() {
-//   unsigned long progress = millis() - fadeStartTime1;
-
-//   if (progress <= FADE_PEDIOD) {
-//     long brightness;
-//     if (fadeDirection1 == true) {
-//       brightness = map(progress, 0, FADE_PEDIOD, MINPWM, 255);
-//     } else {
-//       brightness = map(progress, 0, FADE_PEDIOD, 255, MINPWM);
-//     }
-
-//     analogWrite(LED_PIN_1, brightness);
-//   } else {
-//     fadeDirection1 = !fadeDirection1;
-//     fadeStartTime1 = millis();  // restart fade again
-//   }
-// }
-
-// void fadeLED2() {
-//   unsigned long progress = millis() - fadeStartTime2;
-
-//   if (progress <= FADE_PEDIOD) {
-//     long brightness;
-//     if (fadeDirection2 == true) {
-//       brightness = map(progress, 0, FADE_PEDIOD, MINPWM, 255);
-//     } else {
-//       brightness = map(progress, 0, FADE_PEDIOD, 255, MINPWM);
-//     }
-//     analogWrite(LED_PIN_2, brightness);
-//   } else {
-//     fadeDirection2 = !fadeDirection2;
-//     fadeStartTime2 = millis();  // restart fade again
-//   }
-// }

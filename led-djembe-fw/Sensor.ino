@@ -24,71 +24,74 @@ void initSensor() {
 
 
 void runSensor() {
-  if (millis() - prevMill_readSensor >= intervalReadSensor) {
-    prevMill_readSensor = millis();
 
-    total = total - readings[readIndex];          // Subtract the last reading
-    readings[readIndex] = analogRead(sensorPin);  // Read the sensor
-    total = total + readings[readIndex];          // Add the new reading
-    readIndex = (readIndex + 1) % numReadings;    // Advance to the next position
+  if (mode == 0) {
+    if (millis() - prevMill_readSensor >= intervalReadSensor) {
+      prevMill_readSensor = millis();
 
-    previousAverage = average;      // Store the previous average
-    average = total / numReadings;  // Calculate the new average
+      total = total - readings[readIndex];          // Subtract the last reading
+      readings[readIndex] = analogRead(sensorPin);  // Read the sensor
+      total = total + readings[readIndex];          // Add the new reading
+      readIndex = (readIndex + 1) % numReadings;    // Advance to the next position
 
-    //Serial.print("Sensor value: ");
-    Serial.print(readings[readIndex]);
-    Serial.print(",");
-    Serial.print(average);
-    Serial.print(",");
-    int absAv = abs(average - previousAverage);
-    Serial.println(absAv);
+      previousAverage = average;      // Store the previous average
+      average = total / numReadings;  // Calculate the new average
 
-    if (absAv > minTreshold) {
-      
-      triggerLEDflag = true;
-      stampMill_triggerLED = millis();
-
-      currentBrightness = map(absAv, minTreshold, maxTreshold, 50, MAXBRIGHTNESS);
-      motionSpeed = map(absAv, minTreshold, maxTreshold, 1, 5);
-      maxPosLED = map(absAv, minTreshold, maxTreshold, 100, 0);
-      lastPixels = map(absAv, minTreshold, maxTreshold, 100, 1);
-      maxRangePC = map(absAv, minTreshold, maxTreshold, 0, 100);
-        firstPixel = map(maxRangePC, 0, 100, 0, 58);
-      lastPixel = map(maxRangePC, 0, 100, NUM_LEDS, 59);
-
-      Serial.print("++++ BONG ");
-      Serial.print(absAv);
-       Serial.print(",");
-      Serial.print(maxRangePC);
+      //Serial.print("Sensor value: ");
+      Serial.print(readings[readIndex]);
       Serial.print(",");
-      Serial.print(firstPixel);
+      Serial.print(average);
       Serial.print(",");
-      Serial.print(lastPixel);
-      Serial.println();
-      setMaxBrightness(currentBrightness);
+      int absAv = abs(average - previousAverage);
+      Serial.println(absAv);
 
-       if(maxRangePC > 70) {
-        chooseRandomPalette();
-        Serial.println("NEW PALETTE");
+      if (absAv > minTreshold) {
+
+        triggerLEDflag = true;
+        stampMill_triggerLED = millis();
+
+        currentBrightness = map(absAv, minTreshold, maxTreshold, 50, MAXBRIGHTNESS);
+        motionSpeed = map(absAv, minTreshold, maxTreshold, 1, 5);
+        maxPosLED = map(absAv, minTreshold, maxTreshold, 100, 0);
+
+        maxRangePC = map(absAv, minTreshold, maxTreshold, 0, 100);
+        firstPixel = map(maxRangePC, 0, 100, 0, NUM_LEDS);
+        lastPixels = NUM_LEDS;
+        lastPixel = map(maxRangePC, 0, 100, NUM_LEDS, 59);
+
+        Serial.print("++++ BONG ");
+        Serial.print(absAv);
+        Serial.print(",");
+        Serial.print(maxRangePC);
+        Serial.print(",");
+        Serial.print(firstPixel);
+        Serial.print(",");
+        Serial.print(lastPixel);
+        Serial.println();
+        setMaxBrightness(currentBrightness);
+
+
+
+        if (maxRangePC > 70) {
+          chooseRandomPalette();
+          Serial.println("NEW PALETTE");
+        }
+
+        if (maxRangePC > 50) {
+          gReverseDirection = !gReverseDirection;
+        }
       }
 
-      if(maxRangePC > 50){
-        gReverseDirection =!gReverseDirection;
+      if (triggerLEDflag == true && (millis() - stampMill_triggerLED >= LEDdecayMs)) {
+        // FillLEDsFromPaletteColors(startIndex);
+        currentBrightness = currentBrightness - decreaseIncrement;
+        constrain(currentBrightness, 0, 255);
+        if (currentBrightness < 0) currentBrightness = 0;
+        setMaxBrightness(currentBrightness);
+        Serial.print("____BRI: ");
+        Serial.println(currentBrightness);
+        if (currentBrightness < 1) triggerLEDflag = false;
       }
-
-      
-      
-    }
-
-    if (triggerLEDflag == true && (millis() - stampMill_triggerLED >= LEDdecayMs)) {
-      // FillLEDsFromPaletteColors(startIndex);
-      currentBrightness = currentBrightness - decreaseIncrement;
-      constrain(currentBrightness, 0, 255);
-      if (currentBrightness < 0) currentBrightness = 0;
-      setMaxBrightness(currentBrightness);
-      Serial.print("____BRI: ");
-      Serial.println(currentBrightness);
-      if (currentBrightness < 1) triggerLEDflag = false;
     }
   }
 }
