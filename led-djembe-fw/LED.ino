@@ -2,7 +2,7 @@
 
 #define LED_PIN MOSI
 //#define LED_PIN_2 A1
-#define NUM_LEDS 70
+#define NUM_LEDS 117
 #define MAXBRIGHTNESS 255
 #define LED_TYPE WS2811
 #define COLOR_ORDER GRB
@@ -12,6 +12,9 @@ CRGB leds[NUM_LEDS];
 CRGBPalette16 gPal;
 #define COOLING 55
 #define FRAMES_PER_SECOND 60
+
+int LEDdecayMs = 100;
+int decreaseIncrement = 1;
 
 // SPARKING: What chance (out of 255) is there that a new spark will be lit?
 // Higher chance = more roaring fire.  Lower chance = more flickery fire.
@@ -52,8 +55,8 @@ int intervalFPSled = 10;
 
 int animationMode = 0;
 
-bool triggerLEDflag = false;
-int LEDdecayMs = 3000;
+bool triggerLEDflag = true;
+
 unsigned long stampMill_triggerLED = 0;
 
 void initLED() {
@@ -69,44 +72,159 @@ void initLED() {
   //FillLEDsFromPaletteColors();
 
   chooseRandomPalette();
+
+   gPal = HeatColors_p;
 }
 
 //currentBlending = LINEARBLEND;
 static uint8_t startIndex = 0;
 
+int motionSpeed = 3;
+CRGB leds_L[NUM_LEDS];
+CRGB leds_R[NUM_LEDS];
+
 
 void runLED() {
+
+  random16_add_entropy( random());
+
 
 
   if (millis() - previousMillis_runLEDs >= intervalFPSled) {
     previousMillis_runLEDs = millis();
 
+    Fire2012WithPalette_L(); // run simulation frame, using palette colors
+   Fire2012WithPalette_R(); // run simulation frame, using palette colors
+
+    for (int i = 0; i < NUM_LEDS; i++) {
+    // Addition
+    leds[i] = leds_L[i] + leds_R[i];
+    }
+
+    // startIndex = startIndex + motionSpeed; /* motion speed */
+
+    // // FillLEDsFromPaletteColors(startIndex);
+
+    // if(triggerLEDflag == true)
+    // {
+    //   FillLEDsFromPaletteColors(startIndex);
+    // }
+
+    // if(triggerLEDflag == true && (millis() - stampMill_triggerLED >= LEDdecayMs)){
+    //  // FillLEDsFromPaletteColors(startIndex);
+    //   currentBrightness = currentBrightness - decreaseIncrement;
+    //   constrain(currentBrightness, 0, 255);
+    //   if(currentBrightness < 0) currentBrightness = 0;
+    //   setMaxBrightness(currentBrightness);
+    //   //Serial.print("____BRI: ");
+    //   //Serial.println(currentBrightness);
+    //   if(currentBrightness < 1) triggerLEDflag = false;
+    // }
+
     
-
-    startIndex = startIndex + 1; /* motion speed */
-
-    if(triggerLEDflag == true)
-    {
-      FillLEDsFromPaletteColors(startIndex);
-    }
-
-    if(triggerLEDflag == true && millis() - stampMill_triggerLED >= LEDdecayMs){
-      currentBrightness--;
-      constrain(currentBrightness, 0, 255);
-      setMaxBrightness(currentBrightness);
-      if(currentBrightness == 0) triggerLEDflag = false;
-
-    }
+    
 
     FastLED.show();
   }
+}
+
+void dimLastPixels(int numPixels, uint8_t dimFactor) {
+  for (int i = NUM_LEDS - numPixels; i < NUM_LEDS; i++) {
+    leds[i].nscale8(dimFactor);
+  }
+}
+
+
+void Fire2012WithPalette_L()
+{
+// Array of temperature readings at each simulation cell
+  static uint8_t heat[NUM_LEDS];
+
+  // Step 1.  Cool down every cell a little
+    for( int i = 0; i < (NUM_LEDS - maxPosLED); i++) {
+      heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    }
+  
+    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+    for( int k= NUM_LEDS - 1; k >= 2; k--) {
+      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+    }
+    
+    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+    if( random8() < SPARKING ) {
+      int y = random8(7);
+      heat[y] = qadd8( heat[y], random8(160,255) );
+    }
+
+    // Step 4.  Map from heat cells to LED colors
+    for( int j = 0; j < (NUM_LEDS - maxPosLED); j++) {
+      // Scale the heat value from 0-255 down to 0-240
+      // for best results with color palettes.
+      uint8_t colorindex = scale8( heat[j], 240);
+      CRGB color = ColorFromPalette( gPal, colorindex);
+      int pixelnumber;
+      //gReverseDirection = false;
+      //if( gReverseDirection ) {
+      //  pixelnumber = (NUM_LEDS-1) - j;
+      //} else {
+        pixelnumber = j;
+     // }
+      leds_L[pixelnumber] = color;
+       //leds[pixelnumber] = color;
+    }
+}
+
+void Fire2012WithPalette_R()
+{
+// Array of temperature readings at each simulation cell
+  static uint8_t heat[NUM_LEDS];
+
+  // Step 1.  Cool down every cell a little
+    for( int i = 0; i < (NUM_LEDS - maxPosLED); i++) {
+      heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    }
+  
+    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+    for( int k= NUM_LEDS - 1; k >= 2; k--) {
+      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+    }
+    
+    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+    if( random8() < SPARKING ) {
+      int y = random8(7);
+      heat[y] = qadd8( heat[y], random8(160,255) );
+    }
+
+    // Step 4.  Map from heat cells to LED colors
+    for( int j = 0; j < (NUM_LEDS - maxPosLED); j++) {
+      // Scale the heat value from 0-255 down to 0-240
+      // for best results with color palettes.
+      uint8_t colorindex = scale8( heat[j], 240);
+      CRGB color = ColorFromPalette( gPal, colorindex);
+      int pixelnumber;
+      //gReverseDirection = true;
+      //if( gReverseDirection ) {
+        pixelnumber = (NUM_LEDS-1) - j;
+      // } else {
+      //   pixelnumber = j;
+      // }
+      leds_R[pixelnumber] = color;
+    }
+}
+
+
+
+
+
+
+  
 
 
   //FastLED.delay(1000 / UPDATES_PER_SECOND);
-}
+
 
 void setMaxBrightness(int bri){
-  FastLED.setBrightness(currentBrightness);
+  FastLED.setBrightness(bri);
 }
 
 void chooseRandomPalette() {
@@ -116,7 +234,7 @@ void chooseRandomPalette() {
   Serial.println(randomNum);
 
   if (randomNum == 0) {
-    currentPalette = YellowPalette;
+    currentPalette = PartyColors_p;
   } else if (randomNum == 0) {
     currentPalette = PinkPalette;
   } else if (randomNum == 1) {
