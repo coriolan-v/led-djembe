@@ -80,7 +80,19 @@ int lastPixel;   //= map(maxRangePC, 0, NUM_LEDS, 0, 59);
 unsigned long prevMill_changePalete = 0;
 int intervalPaltteChangeMin = 2;
 
+void showLED(){
+  FastLED.show();
+}
 
+void setColor(int r, int g, int b){
+  for(int i = 0; i < NUM_LEDS; i++){
+    leds[i].r = r; 
+    leds[i].g = g; 
+    leds[i].b = b;
+    }
+
+    showLED();
+}
 
 void runLED() {
 

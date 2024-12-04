@@ -82,7 +82,13 @@ void readBLE() {
     if (blue < 0x10) Serial.print("0");
     Serial.println(blue, HEX);
 
-    Serial.println("")
+    Serial.println("Color!");
+
+    mode = 3;
+    setMaxBrightness(255);
+
+    setColor(red, green, blue);
+
   }
 
   // Buttons
