@@ -8,9 +8,8 @@
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
-#define UPDATES_PER_SECOND 200
 CRGBPalette16 gPal;
-#define COOLING 55
+#define COOLING 55 //55
 #define FRAMES_PER_SECOND 60
 
 int LEDdecayMs = 100;
@@ -19,25 +18,9 @@ int decreaseIncrement = 1;
 // SPARKING: What chance (out of 255) is there that a new spark will be lit?
 // Higher chance = more roaring fire.  Lower chance = more flickery fire.
 // Default 120, suggested range 50-200.
-#define SPARKING 120
-// This example shows several ways to set up and use 'palettes' of colors
-// with FastLED.
-//
-// These compact palettes provide an easy way to re-colorize your
-// animation on the fly, quickly, easily, and with low overhead.
-//
-// USING palettes is MUCH simpler in practice than in theory, so first just
-// run this sketch, and watch the pretty lights as you then read through
-// the code.  Although this sketch has eight (or more) different color schemes,
-// the entire sketch compiles down to about 6.5K on AVR.
-//
-// FastLED provides a few pre-configured color palettes, and makes it
-// extremely easy to make up your own color schemes with palettes.
-//
-// Some notes on the more abstract 'theory and practice' of
-// FastLED compact palettes are at the bottom of this file.
+#define SPARKING 200
 
-int currentBrightness= MAXBRIGHTNESS;
+int currentBrightness = MAXBRIGHTNESS;
 
 CRGBPalette16 currentPalette;
 TBlendType currentBlending;
@@ -67,13 +50,13 @@ void initLED() {
   currentPalette = RainbowColors_p;
   currentBlending = LINEARBLEND;
 
-  gPal = CRGBPalette16(CRGB::Black, CRGB::Pink, CRGB::Pink, CRGB::White);
+ // gPal = CRGBPalette16(CRGB::Black, CRGB::Pink, CRGB::Pink, CRGB::White);
 
   //FillLEDsFromPaletteColors();
 
   chooseRandomPalette();
 
-   gPal = HeatColors_p;
+ // gPal = HeatColors_p;
 }
 
 //currentBlending = LINEARBLEND;
@@ -83,23 +66,44 @@ int motionSpeed = 3;
 CRGB leds_L[NUM_LEDS];
 CRGB leds_R[NUM_LEDS];
 
+int maxPosLED = 0;
+
+int maxRangePC = 0;
+
+int firstPixel;  // = map(maxRangePC, 0, 100, 0, 58);
+int lastPixel;   //= map(maxRangePC, 0, NUM_LEDS, 0, 59);
+
+unsigned long prevMill_changePalete = 0;
+int intervalPaltteChangeMin = 2;
 
 void runLED() {
 
-  random16_add_entropy( random());
+  random16_add_entropy(random());
 
+  if (millis() - prevMill_changePalete >= intervalPaltteChangeMin * 60 * 1000) {
+    prevMill_changePalete = millis();
+
+    chooseRandomPalette();
+  }
 
 
   if (millis() - previousMillis_runLEDs >= intervalFPSled) {
     previousMillis_runLEDs = millis();
 
-    Fire2012WithPalette_L(); // run simulation frame, using palette colors
-   Fire2012WithPalette_R(); // run simulation frame, using palette colors
+    Fire2012WithPalette();
 
-    for (int i = 0; i < NUM_LEDS; i++) {
-    // Addition
-    leds[i] = leds_L[i] + leds_R[i];
-    }
+  //  Fire2012WithPalette_L();  // run simulation frame, using palette colors
+   // Fire2012WithPalette_R();  // run simulation frame, using palette colors
+
+
+
+    // for (int i = 0; i < NUM_LEDS; i++) {
+    //   // Addition
+    //   leds[i] = leds_L[i] + leds_R[i];
+    // }
+
+
+    // dimRange(firstPixel, lastPixel, 10); // Dim the last 5 pixels by 50%
 
     // startIndex = startIndex + motionSpeed; /* motion speed */
 
@@ -121,8 +125,8 @@ void runLED() {
     //   if(currentBrightness < 1) triggerLEDflag = false;
     // }
 
-    
-    
+
+
 
     FastLED.show();
   }
@@ -130,134 +134,125 @@ void runLED() {
 
 void dimLastPixels(int numPixels, uint8_t dimFactor) {
   for (int i = NUM_LEDS - numPixels; i < NUM_LEDS; i++) {
+    // leds[i].nscale8(dimFactor);
+    leds_R[i].nscale8(dimFactor);
+    leds_L[i].nscale8(dimFactor);
+  }
+}
+
+void dimRange(int startIdx, int endIdx, uint8_t dimFactor) {
+  for (int i = startIdx; i <= endIdx; i++) {
     leds[i].nscale8(dimFactor);
   }
 }
 
 
-void Fire2012WithPalette_L()
-{
-// Array of temperature readings at each simulation cell
+void Fire2012WithPalette_L() {
+  // Array of temperature readings at each simulation cell
   static uint8_t heat[NUM_LEDS];
 
   // Step 1.  Cool down every cell a little
-    for( int i = 0; i < (NUM_LEDS - maxPosLED); i++) {
-      heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
-    }
-  
-    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-    for( int k= NUM_LEDS - 1; k >= 2; k--) {
-      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
-    }
-    
-    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
-    if( random8() < SPARKING ) {
-      int y = random8(7);
-      heat[y] = qadd8( heat[y], random8(160,255) );
-    }
+  for (int i = 0; i < (NUM_LEDS - maxPosLED); i++) {
+    heat[i] = qsub8(heat[i], random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+  }
 
-    // Step 4.  Map from heat cells to LED colors
-    for( int j = 0; j < (NUM_LEDS - maxPosLED); j++) {
-      // Scale the heat value from 0-255 down to 0-240
-      // for best results with color palettes.
-      uint8_t colorindex = scale8( heat[j], 240);
-      CRGB color = ColorFromPalette( gPal, colorindex);
-      int pixelnumber;
-      //gReverseDirection = false;
-      //if( gReverseDirection ) {
-      //  pixelnumber = (NUM_LEDS-1) - j;
-      //} else {
-        pixelnumber = j;
-     // }
-      leds_L[pixelnumber] = color;
-       //leds[pixelnumber] = color;
-    }
+  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+  for (int k = NUM_LEDS - 1; k >= 2; k--) {
+    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+  }
+
+  // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+  if (random8() < SPARKING) {
+    int y = random8(7);
+    heat[y] = qadd8(heat[y], random8(160, 255));
+  }
+
+  // Step 4.  Map from heat cells to LED colors
+  for (int j = 0; j < (NUM_LEDS - maxPosLED); j++) {
+    // Scale the heat value from 0-255 down to 0-240
+    // for best results with color palettes.
+    uint8_t colorindex = scale8(heat[j], 240);
+    CRGB color = ColorFromPalette(gPal, colorindex);
+    int pixelnumber;
+    //gReverseDirection = false;
+    //if( gReverseDirection ) {
+    //  pixelnumber = (NUM_LEDS-1) - j;
+    //} else {
+    pixelnumber = j;
+    // }
+    leds_L[pixelnumber] = color;
+    //leds[pixelnumber] = color;
+  }
 }
 
-void Fire2012WithPalette_R()
-{
-// Array of temperature readings at each simulation cell
+void Fire2012WithPalette_R() {
+  // Array of temperature readings at each simulation cell
   static uint8_t heat[NUM_LEDS];
 
   // Step 1.  Cool down every cell a little
-    for( int i = 0; i < (NUM_LEDS - maxPosLED); i++) {
-      heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
-    }
-  
-    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-    for( int k= NUM_LEDS - 1; k >= 2; k--) {
-      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
-    }
-    
-    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
-    if( random8() < SPARKING ) {
-      int y = random8(7);
-      heat[y] = qadd8( heat[y], random8(160,255) );
-    }
+  for (int i = 0; i < (NUM_LEDS - maxPosLED); i++) {
+    heat[i] = qsub8(heat[i], random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+  }
 
-    // Step 4.  Map from heat cells to LED colors
-    for( int j = 0; j < (NUM_LEDS - maxPosLED); j++) {
-      // Scale the heat value from 0-255 down to 0-240
-      // for best results with color palettes.
-      uint8_t colorindex = scale8( heat[j], 240);
-      CRGB color = ColorFromPalette( gPal, colorindex);
-      int pixelnumber;
-      //gReverseDirection = true;
-      //if( gReverseDirection ) {
-        pixelnumber = (NUM_LEDS-1) - j;
-      // } else {
-      //   pixelnumber = j;
-      // }
-      leds_R[pixelnumber] = color;
-    }
+  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+  for (int k = NUM_LEDS - 1; k >= 2; k--) {
+    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+  }
+
+  // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+  if (random8() < SPARKING) {
+    int y = random8(7);
+    heat[y] = qadd8(heat[y], random8(160, 255));
+  }
+
+  // Step 4.  Map from heat cells to LED colors
+  for (int j = 0; j < (NUM_LEDS - maxPosLED); j++) {
+    // Scale the heat value from 0-255 down to 0-240
+    // for best results with color palettes.
+    uint8_t colorindex = scale8(heat[j], 240);
+    CRGB color = ColorFromPalette(gPal, colorindex);
+    int pixelnumber;
+    //gReverseDirection = true;
+    //if( gReverseDirection ) {
+    pixelnumber = (NUM_LEDS - 1) - j;
+    // } else {
+    //   pixelnumber = j;
+    // }
+    leds_R[pixelnumber] = color;
+  }
 }
 
 
-
-
-
-
-  
-
-
-  //FastLED.delay(1000 / UPDATES_PER_SECOND);
-
-
-void setMaxBrightness(int bri){
+void setMaxBrightness(int bri) {
   FastLED.setBrightness(bri);
 }
 
 void chooseRandomPalette() {
   randomSeed(analogRead(A5));
-  int randomNum = random(0, 5);
-  Serial.print("Ranbdom: ");
+  int randomNum = random(0, 7);
+  Serial.print(" Ranbom: ");
   Serial.println(randomNum);
 
   if (randomNum == 0) {
-    currentPalette = PartyColors_p;
-  } else if (randomNum == 0) {
-    currentPalette = PinkPalette;
+    currentPalette = RainbowStripeColors_p;
   } else if (randomNum == 1) {
-    currentPalette = PartyColors_p;
+    currentPalette = PinkPalette;
   } else if (randomNum == 2) {
-    currentPalette = CloudColors_p;
+    currentPalette = PartyColors_p;
   } else if (randomNum == 3) {
-    currentPalette = HeatColors_p;
+    currentPalette = CloudColors_p;
   } else if (randomNum == 4) {
-    //   currentPalette = YellowPalette;
-    // } else if (randomNum == 5) {
-    //   currentPalette = YellowPalette;
-    // } else if (randomNum == 6) {
-    //   currentPalette = YellowPalette;
-    // } else if (randomNum == 7) {
-    //   currentPalette = YellowPalette;
-    // } else if (randomNum == 8) {
-    //   currentPalette = YellowPalette;
-    // } else if (randomNum == 9) {
-    //   currentPalette = YellowPalette;
+    currentPalette = HeatColors_p;
+  } else if (randomNum == 5) {
+    currentPalette = LavaColors_p;
+  } else if (randomNum == 6) {
+    currentPalette = OceanColors_p;
   } else {
-    currentPalette = YellowPalette;
+    currentPalette = PartyColors_p;
   }
+
+  gPal = currentPalette;
+  currentBlending = LINEARBLEND;
 }
 
 unsigned long previousMillis = 0;  // will store last time LED was updated

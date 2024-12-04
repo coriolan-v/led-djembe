@@ -14,7 +14,7 @@ void setup(void)
 
   initLED();
 
-  //initBLE();
+  initBLE();
 
   initSensor();
 }
@@ -27,5 +27,5 @@ void loop(void)
 
   runLED();
 
-  //readBLE();
+  readBLE();
 }

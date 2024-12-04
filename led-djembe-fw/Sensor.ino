@@ -1,18 +1,6 @@
-#include "RunningAverage.h"
-
-RunningAverage myRA(10);
-int samples = 0;
-
 unsigned long prevMill_readSensor = 0;
 int intervalReadSensor = 25;
 int sensorValue = 0;
-
-int sensorTresholdDifference = 90;
-
-void initSensor() {
-  pinMode(A0, INPUT);
-  myRA.clear();  //  explicitly start clean
-}
 
 const int sensorPin = A0;    // Analog input pin for the sensor
 const int numReadings = 10;  // Number of readings for the moving average
@@ -24,8 +12,16 @@ int average = 0;            // Average of the readings
 int previousAverage = 0;    // Previous average for comparison
 
 const int minTreshold = 10;  // Relative threshold value
-const int maxTreshold = 80;  // Relative threshold value
-int lastPixels;
+const int maxTreshold = 90;  // Relative threshold value
+int lastPixels = 0;
+int lastPixels_R = 58;
+int lastPixels_L = 58;
+
+void initSensor() {
+  pinMode(sensorPin, INPUT);
+}
+
+
 
 void runSensor() {
   if (millis() - prevMill_readSensor >= intervalReadSensor) {
@@ -49,7 +45,6 @@ void runSensor() {
 
     if (absAv > minTreshold) {
       
-
       triggerLEDflag = true;
       stampMill_triggerLED = millis();
 
@@ -57,19 +52,32 @@ void runSensor() {
       motionSpeed = map(absAv, minTreshold, maxTreshold, 1, 5);
       maxPosLED = map(absAv, minTreshold, maxTreshold, 100, 0);
       lastPixels = map(absAv, minTreshold, maxTreshold, 100, 1);
+      maxRangePC = map(absAv, minTreshold, maxTreshold, 0, 100);
+        firstPixel = map(maxRangePC, 0, 100, 0, 58);
+      lastPixel = map(maxRangePC, 0, 100, NUM_LEDS, 59);
 
-      Serial.print("++++ BONG");
-      Serial.print(",");
+      Serial.print("++++ BONG ");
       Serial.print(absAv);
+       Serial.print(",");
+      Serial.print(maxRangePC);
       Serial.print(",");
-      Serial.print(currentBrightness);
+      Serial.print(firstPixel);
       Serial.print(",");
-      Serial.print(motionSpeed);
-      Serial.print(",");
-      Serial.println(maxPosLED);
+      Serial.print(lastPixel);
+      Serial.println();
       setMaxBrightness(currentBrightness);
 
-      dimLastPixels(lastPixels, 250); // Dim the last 5 pixels by 50%
+       if(maxRangePC > 70) {
+        chooseRandomPalette();
+        Serial.println("NEW PALETTE");
+      }
+
+      if(maxRangePC > 50){
+        gReverseDirection =!gReverseDirection;
+      }
+
+      
+      
     }
 
     if (triggerLEDflag == true && (millis() - stampMill_triggerLED >= LEDdecayMs)) {
