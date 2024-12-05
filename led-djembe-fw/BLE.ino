@@ -84,7 +84,7 @@ void readBLE() {
 
     Serial.println("Color!");
 
-    mode = 3;
+    //mode = 3;
     setMaxBrightness(255);
 
     setColor(red, green, blue);
@@ -102,11 +102,27 @@ void readBLE() {
     } else {
       Serial.println(" released");
 
-      if (buttnum == 1) mode = 0;  // normal mode
+      if (buttnum == 1) {
+        mode = 0;  // normal mode
+        Serial.println("MODE 0 ACTIVATED");
+        setMaxBrightness(0);
+      }
       if (buttnum == 2) {
-        mode = 1;  // demo mode
+        mode = 1;  // demo mode, no interaction
          setMaxBrightness(255);
       }
+      if (buttnum == 3) {
+        mode = 3;  // fixed color, no interaction (set using color picker)
+         setMaxBrightness(255);
+      }
+      if (buttnum == 4) {
+        mode = 4;  // normal mode but with fixed color (set using color picker)
+         ///setMaxBrightness(255);
+        Serial.println("MODE 4 ACTIVATED");
+        setMaxBrightness(0);
+       // setColor(red, green, blue);
+      }
+
       // if (buttnum == 2) ledStatus = 2; // oFF
       // if (buttnum == 3) ledStatus = 3; // CONTINUOUS
     }

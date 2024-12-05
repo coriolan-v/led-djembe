@@ -25,7 +25,7 @@ void initSensor() {
 
 void runSensor() {
 
-  if (mode == 0) {
+  if (mode == 0 || mode == 4) {
     if (millis() - prevMill_readSensor >= intervalReadSensor) {
       prevMill_readSensor = millis();
 
@@ -72,7 +72,7 @@ void runSensor() {
 
 
 
-        if (maxRangePC > 70) {
+        if (maxRangePC > 70 && mode == 0) {
           chooseRandomPalette();
           Serial.println("NEW PALETTE");
         }

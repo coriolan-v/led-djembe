@@ -98,7 +98,7 @@ void runLED() {
 
   random16_add_entropy(random());
 
-  if (millis() - prevMill_changePalete >= intervalPaltteChangeMin * 60 * 1000) {
+  if (millis() - prevMill_changePalete >= intervalPaltteChangeMin * 60 * 1000 && mode == 0) {
     prevMill_changePalete = millis();
 
     chooseRandomPalette();
@@ -356,6 +356,18 @@ void SetupTotallyRandomPalette() {
     currentPalette[i] = CHSV(random8(), 255, random8());
   }
 }
+
+void SetupFixedPalette(int r, int g, int b) {
+  for (int i = 0; i < 16; ++i) {
+    currentPalette[i].r = r;
+    currentPalette[i].g = g;
+    currentPalette[i].b = b;
+    //CHSV(random8(), 255, random8());
+  }
+
+  gPal = currentPalette;
+}
+
 
 // This function sets up a palette of black and white stripes,
 // using code.  Since the palette is effectively an array of
