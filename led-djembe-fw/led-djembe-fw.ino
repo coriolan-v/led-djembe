@@ -26,6 +26,7 @@ void setup(void)
 void loop(void) 
 {
   runSensor();
+  //delay(10);
 
   runLED();
 

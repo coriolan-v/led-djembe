@@ -1,8 +1,8 @@
 unsigned long prevMill_readSensor = 0;
-int intervalReadSensor = 25;
+int intervalReadSensor = 50;
 int sensorValue = 0;
 
-const int sensorPin = A0;    // Analog input pin for the sensor
+const int sensorPin = A2;    // Analog input pin for the sensor
 const int numReadings = 10;  // Number of readings for the moving average
 
 int readings[numReadings];  // Array to store the readings
@@ -10,8 +10,9 @@ int readIndex = 0;          // Index of the current reading
 int total = 0;              // Sum of the readings
 int average = 0;            // Average of the readings
 int previousAverage = 0;    // Previous average for comparison
+float standardDeviation = 0; // Standard deviation of sensor reading
 
-const int minTreshold = 10;  // Relative threshold value
+const int minTreshold = 15;  // Relative threshold value
 const int maxTreshold = 90;  // Relative threshold value
 int lastPixels = 0;
 int lastPixels_R = 58;
@@ -37,15 +38,23 @@ void runSensor() {
       previousAverage = average;      // Store the previous average
       average = total / numReadings;  // Calculate the new average
 
+      float sumOfSquares = 0;
+      for (int i = 0; i < numReadings; i++) {
+        sumOfSquares += pow(readings[i] - average, 2);
+      }
+      standardDeviation = sqrt(sumOfSquares / numReadings);
+
       //Serial.print("Sensor value: ");
       Serial.print(readings[readIndex]);
       Serial.print(",");
       Serial.print(average);
       Serial.print(",");
+      Serial.print(standardDeviation);
+      Serial.print(",");
       int absAv = abs(average - previousAverage);
       Serial.println(absAv);
 
-      if (absAv > minTreshold) {
+      if (absAv > minTreshold && standardDeviation < 200) {//&& readings[readIndex] < 200) {
 
         triggerLEDflag = true;
         stampMill_triggerLED = millis();
@@ -60,15 +69,15 @@ void runSensor() {
         lastPixel = map(maxRangePC, 0, 100, NUM_LEDS, 59);
 
         Serial.print("++++ BONG ");
-        Serial.print(absAv);
-        Serial.print(",");
-        Serial.print(maxRangePC);
-        Serial.print(",");
-        Serial.print(firstPixel);
-        Serial.print(",");
-        Serial.print(lastPixel);
-        Serial.println();
-        setMaxBrightness(currentBrightness);
+        // Serial.print(absAv);
+        // Serial.print(",");
+        // Serial.print(maxRangePC);
+        // Serial.print(",");
+        // Serial.print(firstPixel);
+        // Serial.print(",");
+        // Serial.print(lastPixel);
+        // Serial.println();
+        // setMaxBrightness(currentBrightness);
 
 
 
@@ -88,8 +97,8 @@ void runSensor() {
         constrain(currentBrightness, 0, 255);
         if (currentBrightness < 0) currentBrightness = 0;
         setMaxBrightness(currentBrightness);
-        Serial.print("____BRI: ");
-        Serial.println(currentBrightness);
+        // Serial.print("____BRI: ");
+        // Serial.println(currentBrightness);
         if (currentBrightness < 1) triggerLEDflag = false;
       }
     }
