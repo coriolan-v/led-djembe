@@ -1,5 +1,5 @@
 // Feather nrf52840 Express
-
+#include <FastLED.h>
 #include <bluefruit.h>
 
 int mode = 0;

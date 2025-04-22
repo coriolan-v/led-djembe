@@ -1,4 +1,4 @@
-#include <FastLED.h>
+
 
 #define LED_PIN MOSI
 //#define LED_PIN_2 A1
@@ -13,12 +13,14 @@ CRGBPalette16 gPal;
 #define FRAMES_PER_SECOND 60
 
 int LEDdecayMs = 100;
-int decreaseIncrement = 1;
+int decreaseIncrement = 13;
 
 // SPARKING: What chance (out of 255) is there that a new spark will be lit?
 // Higher chance = more roaring fire.  Lower chance = more flickery fire.
 // Default 120, suggested range 50-200.
 #define SPARKING 200
+
+int finalDimFactor = 1;
 
 int currentBrightness = MAXBRIGHTNESS;
 
@@ -41,8 +43,8 @@ int animationMode = 0;
 bool triggerLEDflag = true;
 
 unsigned long stampMill_triggerLED = 0;
-#include "fx/1d/demoreel100.hpp"
-DemoReel100Ref demoReel = DemoReel100Ref::New(NUM_LEDS);
+//#include "fx/1d/demoreel100.h"
+//DemoReel100Ref demoReel = DemoReel100Ref::New(NUM_LEDS);
 
 void initLED() {
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -79,6 +81,7 @@ int lastPixel;   //= map(maxRangePC, 0, NUM_LEDS, 0, 59);
 
 unsigned long prevMill_changePalete = 0;
 int intervalPaltteChangeMin = 2;
+int intervalPaltteChangeSec = 30;
 
 void showLED(){
   FastLED.show();
@@ -98,7 +101,7 @@ void runLED() {
 
   random16_add_entropy(random());
 
-  if (millis() - prevMill_changePalete >= intervalPaltteChangeMin * 60 * 1000 && mode == 0) {
+  if (millis() - prevMill_changePalete >= intervalPaltteChangeSec * 1000 && mode == 0) {
     prevMill_changePalete = millis();
 
     chooseRandomPalette();
@@ -111,9 +114,12 @@ void runLED() {
     if(mode == 0){
         Fire2012WithPalette();
 
-     gradualDimRange(firstPixel, lastPixel, 25);
+     gradualDimRange(firstPixel, lastPixel, finalDimFactor);
     } else if (mode == 1){
-         demoReel->draw(Fx::DrawContext(millis(), leds));
+       Fire2012WithPalette();
+
+     gradualDimRange(firstPixel, lastPixel, finalDimFactor);
+         //demoReel->draw(Fx::DrawContext(millis(), leds));
     }
    
 
@@ -124,7 +130,7 @@ void runLED() {
 
 
 void demoInit(){
-    demoReel->lazyInit();
+    //demoReel->lazyInit();
 }
 
 void gradualDimRange(int startIdx, int endIdx, uint8_t finalDimFactor) {

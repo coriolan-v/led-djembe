@@ -1,9 +1,11 @@
+bool verbose = false;
+
 unsigned long prevMill_readSensor = 0;
 int intervalReadSensor = 50;
 int sensorValue = 0;
 
 const int sensorPin = A2;    // Analog input pin for the sensor
-const int numReadings = 10;  // Number of readings for the moving average
+const int numReadings = 12;  // Number of readings for the moving average
 
 int readings[numReadings];  // Array to store the readings
 int readIndex = 0;          // Index of the current reading
@@ -44,15 +46,20 @@ void runSensor() {
       }
       standardDeviation = sqrt(sumOfSquares / numReadings);
 
-      //Serial.print("Sensor value: ");
-      Serial.print(readings[readIndex]);
-      Serial.print(",");
-      Serial.print(average);
-      Serial.print(",");
-      Serial.print(standardDeviation);
-      Serial.print(",");
-      int absAv = abs(average - previousAverage);
-      Serial.println(absAv);
+      if(verbose){
+  //Serial.print("Sensor value: ");
+        Serial.print(readings[readIndex]);
+        Serial.print(",");
+        Serial.print(average);
+        Serial.print(",");
+        Serial.print(standardDeviation);
+        Serial.print(",");
+      }
+        int absAv = abs(average - previousAverage);
+       if(verbose) Serial.println(absAv);
+      
+    
+      
 
       if (absAv > minTreshold && standardDeviation < 200) {//&& readings[readIndex] < 200) {
 
@@ -68,7 +75,7 @@ void runSensor() {
         lastPixels = NUM_LEDS;
         lastPixel = map(maxRangePC, 0, 100, NUM_LEDS, 59);
 
-        Serial.print("++++ BONG ");
+        if(verbose) Serial.print("++++ BONG ");
         // Serial.print(absAv);
         // Serial.print(",");
         // Serial.print(maxRangePC);
